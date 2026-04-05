@@ -1,0 +1,40 @@
+---
+- name: Download k3s installation script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/get_k3s.sh
+    mode: '0755'
+
+- name: Install k3s
+  ansible.builtin.command: /tmp/get_k3s.sh
+
+- name: Enable and start k3s service
+  ansible.builtin.service:
+    name: k3s
+    enabled: yes
+    state: started
+  become: yes
+
+- name: Read node token
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_token
+  become: yes
+
+- name: Set k3s token fact
+  ansible.builtin.set_fact:
+    k3s_token: "{{ k3s_token.content | b64decode | trim }}"
+
+- name: Fetch kubeconfig
+  ansible.builtin.fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: ~/.kube/config
+    flat: yes
+  become: yes
+
+- name: Replace 127.0.0.1 to server IP in kubeconfig on local machine
+  ansible.builtin.replace:
+    path: ~/.kube/config
+    regexp: '127.0.0.1'
+    replace: "{{ ansible_host }}"
+  delegate_to: localhost

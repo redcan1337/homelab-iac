@@ -10,3 +10,10 @@
 - hosts: agent
   roles:
     - agent
+
+- hosts: localhost
+  connection: local
+  vars_files:
+    - ./group_vars/vault.yml
+  roles:
+    - monitoring

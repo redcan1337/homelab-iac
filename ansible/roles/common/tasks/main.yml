@@ -17,3 +17,19 @@
     replace: '# \1'
   become: yes
 
+- name: Grow /dev/sdb1 to fill the disk
+  ansible.builtin.command: "growpart /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1 1"
+  register: growpart_result
+  changed_when: "'CHANGED' in growpart_result.stdout"
+  failed_when:
+    - growpart_result.rc != 0
+    - "'NOCHANGE' not in growpart_result.stdout"
+  become: yes
+
+- name: Resize VG and LV to use all free space
+  community.general.lvol:
+    vg: "{{ root_vg }}"
+    lv: "{{ root_lv }}"
+    size: 100%PVS
+    resizefs: true
+  become: yes

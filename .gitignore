@@ -6,6 +6,7 @@ terraform/.terraform.lock.hcl
 *.tfvars
 
 ansible/inventory.yml
+ansible/group_vars/vault.yml
 
 *.kubeconfig
 kubeconfig

@@ -35,6 +35,12 @@ resource "proxmox_vm_qemu" "vm" {
     scsi {
       scsi0 {
         disk {
+          size    = "1G"
+          storage = var.storage
+        }
+      }
+      scsi1 {
+        disk {
           size    = var.disk_size
           storage = var.storage
         }

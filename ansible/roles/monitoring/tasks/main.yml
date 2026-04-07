@@ -1,0 +1,32 @@
+---
+- name: Create monitoring namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+
+- name: Create Grafana secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: grafana-secret
+        namespace: monitoring
+      type: Opaque
+      data:
+        admin-user: "{{ grafana_admin_username | b64encode }}"
+        admin-password: "{{ grafana_admin_password | b64encode }}"
+
+- name: kube-prometheus-stack
+  kubernetes.core.helm:
+    name: monitoring
+    chart_ref: prometheus-community/kube-prometheus-stack
+    release_namespace: monitoring
+    create_namespace: false
+    values_files: "{{ monitoring_values_file }}"
+        

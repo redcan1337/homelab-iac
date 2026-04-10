@@ -114,3 +114,21 @@
         ports:
           - port: 9710
             targetPort: 9710
+
+# dashboards
+- name: Create Grafana dashboard configmap for fortigate-exporter
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-fortigate-dashboard
+        namespace: monitoring
+        labels:
+          grafana_dashboard: "1"
+        annotations:
+          grafana_folder: "Fortigate"
+      data:
+        fortigate.json: |
+          {{ lookup('file', 'dashboards/fortigate.json') }}

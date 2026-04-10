@@ -1,2 +1,4 @@
 grafana_admin_password: ""
 grafana_admin_username: ""
+fortigate_api_token: ""
+fortigate_url: ""

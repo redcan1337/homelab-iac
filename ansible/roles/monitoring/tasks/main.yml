@@ -8,6 +8,8 @@
       metadata:
         name: monitoring
 
+# # kube-prometheus-stack
+
 - name: Create Grafana secret
   kubernetes.core.k8s:
     state: present
@@ -28,5 +30,87 @@
     chart_ref: prometheus-community/kube-prometheus-stack
     release_namespace: monitoring
     create_namespace: false
-    values_files: "{{ monitoring_values_file }}"
-        
+    values: "{{ lookup('template', 'values.j2') | from_yaml  }}"
+
+# fortigate-exporter
+- name: Create Fortigate secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: fortigate-secret
+        namespace: monitoring
+      type: Opaque
+      stringData:
+        fortigate-key.yaml: |
+          "{{ fortigate_url }}":
+            token: {{ fortigate_api_token }}
+            probes:
+              exclude:
+                - System/SensorInfo
+                - BGP/Neighbors/IPv4
+                - BGP/Neighbors/IPv6
+                - Network/Dns/Latency
+                - System/Central-Management/Status
+                - System/HAStatistics
+                - System/Ha-peer
+                - System/Interface/Transceivers
+                - System/Performance/Status
+                - System/Ntp/Status
+                - System/HAChecksum
+                - Switch/ManagedSwitch
+
+- name: Deploy fortigate-exporter
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: fortigate-exporter
+        namespace: monitoring
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: fortigate-exporter
+        template:
+          metadata:
+            labels:
+              app: fortigate-exporter
+          spec:
+            containers:
+              - name: fortigate-exporter
+                image: prometheuscommunity/fortigate-exporter:latest
+                args:
+                  - "-auth-file=/config/fortigate-key.yaml"
+                  - "-insecure"
+                ports:
+                  - containerPort: 9710
+                volumeMounts:
+                  - name: config-volume
+                    mountPath: /config/fortigate-key.yaml
+                    subPath: fortigate-key.yaml
+                    readOnly: true
+            volumes:
+              - name: config-volume
+                secret:
+                  secretName: fortigate-secret
+
+- name: Expose fortigate-exporter
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: fortigate-exporter
+        namespace: monitoring
+      spec:
+        selector:
+          app: fortigate-exporter
+        ports:
+          - port: 9710
+            targetPort: 9710

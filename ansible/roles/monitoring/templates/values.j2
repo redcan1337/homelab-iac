@@ -7,6 +7,14 @@ grafana:
   service:
     type: NodePort
     nodePort: 30000
+  persistence:
+    enabled: true
+    type: sts
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+    finalizers:
+      - kubernetes.io/pvc-protection
 
 prometheus:
   enabled: true
@@ -22,6 +30,20 @@ prometheus:
           resources:
             requests:
               storage: 10Gi
+    additionalScrapeConfigs:
+      - job_name: 'fortigate'
+        metrics_path: /probe
+        static_configs:
+          - targets:
+            - {{ fortigate_url }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+            regex: '(?:.+)(?::\/\/)([^:]*).*'
+          - target_label: __address__
+            replacement: 'fortigate-exporter.monitoring:9710'
 
 alertmanager:
   enabled: true

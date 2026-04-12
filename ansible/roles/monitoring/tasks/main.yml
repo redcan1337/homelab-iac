@@ -115,6 +115,77 @@
           - port: 9710
             targetPort: 9710
 
+# pve-exporter
+- name: Create Proxmox VE secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: pve-secret
+        namespace: monitoring
+      type: Opaque
+      stringData:
+        pve.yaml: |
+          default:
+            user: "{{ pve_user }}"
+            token_name: "{{ pve_token_name }}"
+            token_value: "{{ pve_token_value }}"
+            verify_ssl: false
+
+- name: Deploy pve-exporter
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: pve-exporter
+        namespace: monitoring
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: pve-exporter
+        template:
+          metadata:
+            labels:
+              app: pve-exporter
+          spec:
+            containers:
+              - name: pve-exporter
+                image: prompve/prometheus-pve-exporter:latest
+                args:
+                  - "--config=/config/pve.yaml"
+                ports:
+                  - containerPort: 9221
+                volumeMounts:
+                  - name: config-volume
+                    mountPath: /config/pve.yaml
+                    subPath: pve.yaml
+                    readOnly: true
+            volumes:
+              - name: config-volume
+                secret:
+                  secretName: pve-secret
+
+- name: Expose pve-exporter
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: pve-exporter
+        namespace: monitoring
+      spec:
+        selector:
+          app: pve-exporter
+        ports:
+          - port: 9221
+            targetPort: 9221  
+
 # dashboards
 - name: Create Grafana dashboard configmap for fortigate-exporter
   kubernetes.core.k8s:

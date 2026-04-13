@@ -190,6 +190,7 @@
 - name: Create Grafana dashboard configmap for fortigate-exporter
   kubernetes.core.k8s:
     state: present
+    force: yes
     definition:
       apiVersion: v1
       kind: ConfigMap
@@ -203,3 +204,39 @@
       data:
         fortigate.json: |
           {{ lookup('file', 'dashboards/fortigate.json') }}
+
+- name: Create Grafana dashboard configmap for pve-exporter
+  kubernetes.core.k8s:
+    state: present
+    force: yes
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-pve-dashboard
+        namespace: monitoring
+        labels:
+          grafana_dashboard: "1"
+        annotations:
+          grafana_folder: "PVE"
+      data:
+        proxmox.json: |
+          {{ lookup('file', 'dashboards/proxmox.json') }}
+
+- name: Create Grafana dashboard configmap for monitoring overview
+  kubernetes.core.k8s:
+    state: present
+    force: yes
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: grafana-monitoring-overview-dashboard
+        namespace: monitoring
+        labels:
+          grafana_dashboard: "1"
+        annotations:
+          grafana_folder: "Monitoring"
+      data:
+        monitoring_overview.json: |
+          {{ lookup('file', 'dashboards/monitoring_overview.json') }}

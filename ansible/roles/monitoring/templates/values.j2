@@ -72,6 +72,21 @@ prometheus:
 
 alertmanager:
   enabled: true
+  config:
+    route:
+      group_by: ['namespace', 'job']
+      receiver: 'null'
+      routes:
+        - receiver: 'null'
+          matchers:
+            - alertname = "Watchdog"
+        - receiver: 'discord'
+    receivers:
+      - name: 'null'
+      - name: 'discord'
+        discord_configs:
+          - webhook_url: '{{ discord_webhook_url }}'
+            send_resolved: true
   alertmanagerSpec:
     storage:
       volumeClaimTemplate:

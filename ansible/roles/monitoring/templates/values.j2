@@ -4,9 +4,11 @@ grafana:
     existingSecret: grafana-secret
     userKey: admin-user
     passwordKey: admin-password
-  service:
-    type: NodePort
-    nodePort: 30000
+  ingress:
+    enabled: true
+    hosts:
+      - {{ grafana_domain }}
+    path: /
   persistence:
     enabled: true
     type: sts

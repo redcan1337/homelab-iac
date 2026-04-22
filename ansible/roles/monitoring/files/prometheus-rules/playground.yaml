@@ -1,0 +1,29 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: playground
+  namespace: monitoring
+  labels:
+    app: playground
+    release: monitoring
+spec:
+  groups:
+    - name: playground.rules
+      interval: 30s
+      rules:
+        - alert: ransomewareLiveFiledToExecute
+          expr: time() - script_finished{script="ransomware_live"} > 3600
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Ransomware Live failed to run successfully for over an hour."
+            description: "Issues with Ransomware.live script, no successful run in the last hour."
+        - alert: scraperFailedToExecute
+          expr: time() - script_finished{script="scraper"} > 21600
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Scraper failed to run successfully for over 6 hours."
+            description: "Issues with Scraper script, no successful run in the last 6 hours."

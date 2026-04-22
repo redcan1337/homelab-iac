@@ -19,3 +19,20 @@ provider "proxmox" {
   pm_api_token_secret = var.PM_API_TOKEN_SECRET
   pm_tls_insecure = true
 }
+
+
+variable "FORTIGATE_HOST" {
+  description = "FortiGate Host"
+  type        = string
+}
+
+variable "FORTIGATE_TOKEN" {
+  description = "FortiGate API Token"
+  type        = string
+}
+
+provider "fortios" {
+  hostname = var.FORTIGATE_HOST
+  token = var.FORTIGATE_TOKEN
+  insecure = true
+}

@@ -54,3 +54,17 @@ variable "ssh_public_key" {
   description = "SSH public key for VM access"
   type        = string
 }
+
+
+# FortiGate DNS Database
+
+variable "dns_static_entries" {
+  description = "List of DNS entries to create"
+  type = list(object({
+    hostname   = string
+    type   = string
+    ttl    = number
+    ip     = string
+  }))
+  default = []
+}

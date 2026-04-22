@@ -4,6 +4,9 @@ terraform {
       source  = "telmate/proxmox"
       version = "3.0.2-rc07"
     }
+    fortios = {
+      source  = "fortinetdev/fortios"
+    }
     local = {
       source  = "hashicorp/local"
     }
@@ -31,6 +34,20 @@ module "k3s_vms" {
   tags           = each.value.tags
 }
 
+# FortiGate DNS Records
+module "dns_records" {
+  source = "./modules/dns_record"
+
+  zone_name     = "k3s.home"
+  domain        = "k3s.home"
+  type          = "A"
+  view          = "default"
+  ttl           = 3600
+  authoritative = true
+  dns_entries   = var.dns_static_entries
+}
+
+# Ansible inventory
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/../ansible/inventory.yml"
 

@@ -24,4 +24,4 @@ Thumbs.db
 .idea/
 *.swp
 
-values.example.yml
+k3s/

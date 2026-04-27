@@ -1,0 +1,36 @@
+gitea:
+  admin:
+    existingSecret: gitea-admin-secret
+    passwordMode: initialOnlyNoReset
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: monitoring
+
+ingress:
+  enabled: true
+  hosts:
+    - host: {{ gitea_domain }}
+
+postgresql-ha:
+  enabled: false
+
+postgresql:
+  enabled: true
+  primary:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+valkey-cluster:
+  enabled: false
+
+valkey:
+  enabled: true

@@ -1,0 +1,57 @@
+---
+- name: Create gitea namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: gitea
+
+- name: Create gitea secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: gitea-admin-secret
+        namespace: gitea
+      type: Opaque
+      data:
+        username: "{{ gitea_admin_username | b64encode }}"
+        password: "{{ gitea_admin_password | b64encode }}"
+
+- name: Deploy gitea
+  kubernetes.core.helm:
+    name: gitea
+    chart_ref: gitea-charts/gitea
+    release_namespace: gitea
+    create_namespace: false
+    values: "{{ lookup('template', 'gitea.j2') | from_yaml  }}"
+
+- name: Obtain gitea runner token
+  ansible.builtin.command: "kubectl exec -n gitea -it service/gitea-http -- gitea --config /data/gitea/conf/app.ini actions generate-runner-token"
+  register: runner_token
+
+- name: Create gitea act_runner secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: gitea-act-runner-secret
+        namespace: gitea
+      type: Opaque
+      data:
+        token: "{{ runner_token.stdout | b64encode }}"
+
+- name: Deploy gitea act_runner
+  kubernetes.core.helm:
+    name: gitea-act-runner
+    chart_ref: gitea-charts/actions
+    release_namespace: gitea
+    create_namespace: false
+    values: "{{ lookup('template', 'runner.j2') | from_yaml  }}"
+    
